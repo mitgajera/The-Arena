@@ -20,9 +20,65 @@ export interface ClosedPosition {
   txSignature: string;
 }
 
-export class AdrenPoller {
+interface AdrenaClosedPositionApiRow {
+  opened_at?: number;
+  closed_at?: number;
+  collateral_usd?: number;
+  realized_pnl_usd?: number;
+  side?: "long" | "short";
+  notional_usd?: number;
+  tx_signature?: string;
+  openedAt?: number;
+  closedAt?: number;
+  collateralUsd?: number;
+  realizedPnlUsd?: number;
+  notionalUsd?: number;
+  txSignature?: string;
+}
+
+function normalizeRestBaseUrl(raw: string): string {
+  return raw.replace(/\/+$/, "");
+}
+
+function mapApiRowToClosedPosition(
+  wallet: string,
+  row: AdrenaClosedPositionApiRow
+): ClosedPosition | null {
+  const openedAt = row.opened_at ?? row.openedAt;
+  const closedAt = row.closed_at ?? row.closedAt;
+  const collateralUsd = row.collateral_usd ?? row.collateralUsd;
+  const realizedPnlUsd = row.realized_pnl_usd ?? row.realizedPnlUsd;
+  const notionalUsd = row.notional_usd ?? row.notionalUsd;
+  const txSignature = row.tx_signature ?? row.txSignature;
+  const side = row.side;
+
+  if (
+    typeof openedAt !== "number" ||
+    typeof closedAt !== "number" ||
+    typeof collateralUsd !== "number" ||
+    typeof realizedPnlUsd !== "number" ||
+    typeof notionalUsd !== "number" ||
+    typeof txSignature !== "string" ||
+    (side !== "long" && side !== "short")
+  ) {
+    return null;
+  }
+
+  return {
+    wallet,
+    openedAt,
+    closedAt,
+    collateralUsd,
+    realizedPnlUsd,
+    side,
+    notionalUsd,
+    txSignature,
+  };
+}
+
+export class AdrenaPoller {
   private connection: Connection;
-  private adrenaProgram: PublicKey;
+  private adrenaProgram: PublicKey | null;
   private competitionId: number;
   private periodStart: number;
 
@@ -32,16 +88,16 @@ export class AdrenPoller {
 
   constructor(
     rpcUrl: string,
-    adrenaProgram: string,
+    adrenaProgram: string | null,
     competitionId: number,
     periodStart: number,
     adrenaRestUrl?: string
   ) {
     this.connection = new Connection(rpcUrl, "confirmed");
-    this.adrenaProgram = new PublicKey(adrenaProgram);
+    this.adrenaProgram = adrenaProgram ? new PublicKey(adrenaProgram) : null;
     this.competitionId = competitionId;
     this.periodStart = periodStart;
-    this.adrenaRestUrl = adrenaRestUrl ?? null;
+    this.adrenaRestUrl = adrenaRestUrl ? normalizeRestBaseUrl(adrenaRestUrl) : null;
   }
 
   /**
@@ -78,24 +134,15 @@ export class AdrenPoller {
     try {
       const res = await fetch(url);
       if (!res.ok) {
-        console.warn(`[Poller] REST API ${res.status} for wallet ${wallet.slice(0, 8)}…`);
+        console.warn(`[Poller] REST API ${res.status} for wallet ${wallet.slice(0, 8)}...`);
         return;
       }
 
-      const data = await res.json() as Array<Record<string, unknown>>;
+      const data = (await res.json()) as AdrenaClosedPositionApiRow[];
 
       for (const row of data) {
-        // Field mapping — update keys once Adrena confirms their response schema
-        const pos: ClosedPosition = {
-          wallet,
-          openedAt:       row["opened_at"]        as number,
-          closedAt:       row["closed_at"]         as number,
-          collateralUsd:  row["collateral_usd"]    as number,
-          realizedPnlUsd: row["realized_pnl_usd"]  as number,
-          side:           row["side"]              as "long" | "short",
-          notionalUsd:    row["notional_usd"]      as number,
-          txSignature:    row["tx_signature"]      as string,
-        };
+        const pos = mapApiRowToClosedPosition(wallet, row);
+        if (!pos) continue;
 
         await this.storePosition(pos);
       }
@@ -108,6 +155,11 @@ export class AdrenPoller {
    * Subscribe to real-time position close events via Solana log subscription.
    */
   startSubscription(): void {
+    if (!this.adrenaProgram) {
+      console.warn("[Poller] ADRENA_PROGRAM_ID missing; realtime subscription disabled");
+      return;
+    }
+
     console.log("[Poller] Starting log subscription for Adrena program");
 
     this.connection.onLogs(
@@ -256,7 +308,7 @@ export class AdrenPoller {
     });
 
     // Update streak immediately on each new position
-    await updateStreak(pos.wallet);
+    await updateStreak(pos.wallet, this.competitionId);
 
     console.log(
       `[Poller] Stored ${pos.side} ${pos.notionalUsd.toFixed(0)} USD for ${pos.wallet.slice(0, 8)}…`

@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "anchor build",
     "test": "anchor test",
+    "test:unit": "npm --prefix indexer test",
+    "test:program": "anchor test",
     "seed": "ts-node -P scripts/tsconfig.json scripts/seed_devnet.ts",
     "deploy": "ts-node -P scripts/tsconfig.json scripts/deploy.ts",
-    "test:competition": "ts-node -P scripts/tsconfig.json scripts/run_test_competition.ts"
+    "test:competition": "ts-node -P scripts/tsconfig.json scripts/run_test_competition.ts",
+    "dev:indexer": "npm --prefix indexer start",
+    "dev:api": "npm --prefix api start",
+    "dev:frontend": "npm --prefix frontend run dev"
   },
   "devDependencies": {
     "@coral-xyz/anchor": "^0.30.1",

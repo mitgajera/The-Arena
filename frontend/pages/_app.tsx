@@ -4,6 +4,11 @@ import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
+import {
+  BackpackWalletAdapter,
+  PhantomWalletAdapter,
+  SolflareWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl } from "@solana/web3.js";
 import "../styles/globals.css";
@@ -19,12 +24,18 @@ export default function App({ Component, pageProps }: AppProps) {
     []
   );
 
-  // Wallets auto-detected from browser extensions (Phantom, Backpack, etc.)
-  const wallets = useMemo(() => [], []);
+  const wallets = useMemo(
+    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()],
+    []
+  );
+
+  const handleWalletError = (error: Error) => {
+    console.error("[Wallet] Adapter error:", error.message);
+  };
 
   return (
     <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect onError={handleWalletError}>
         <WalletModalProvider>
           <Component {...pageProps} />
         </WalletModalProvider>

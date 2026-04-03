@@ -9,7 +9,7 @@ const COMPETITION_ID = parseInt(
 );
 
 export default function CompetitionPage() {
-  const { publicKey } = useWallet();
+  const { publicKey, connected } = useWallet();
   const connectedWallet = publicKey?.toBase58() ?? null;
 
   return (
@@ -22,7 +22,12 @@ export default function CompetitionPage() {
         />
       </Head>
 
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
+        <span className="rounded-full bg-black/70 px-3 py-1 text-xs text-white">
+          {connected && connectedWallet
+            ? `${connectedWallet.slice(0, 4)}...${connectedWallet.slice(-4)}`
+            : "Wallet not connected"}
+        </span>
         <WalletMultiButton />
       </div>
 

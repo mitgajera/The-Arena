@@ -4,7 +4,7 @@ import { Connection, Keypair } from "@solana/web3.js";
 import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { eq } from "drizzle-orm";
 import { db, schema } from "./db";
-import { AdrenPoller } from "./poller";
+import { AdrenaPoller } from "./poller";
 import { aggregateSquads, recomputeWalletRas } from "./squad_aggregator";
 import {
   resolveExpiredMatches,
@@ -65,7 +65,7 @@ async function main() {
   ];
 
   // Backfill historical positions
-  const poller = new AdrenPoller(
+  const poller = new AdrenaPoller(
     RPC_URL,
     ADRENA_ID,
     competition.id,

@@ -3,7 +3,7 @@ import BN from "bn.js";
 import { Program } from "@coral-xyz/anchor";
 import { Keypair } from "@solana/web3.js";
 import { db, schema } from "./db";
-import { computeRAS, computeStreak, TradeRecord } from "./ras";
+import { computeRAS, TradeRecord } from "./ras";
 
 const TIER_THRESHOLDS = {
   diamond: 25_000,
@@ -40,28 +40,50 @@ async function getLatestRas(
   return { ras: score?.ras ?? 0, avgCollateral };
 }
 
+function dayFromUnix(ts: number): string {
+  return new Date(ts * 1000).toISOString().slice(0, 10);
+}
+
+function computeConsecutiveStreakDays(closeTimes: number[]): number {
+  if (!closeTimes.length) return 0;
+
+  const uniqueDaysAsc = Array.from(new Set(closeTimes.map(dayFromUnix))).sort();
+  let streak = 1;
+
+  for (let i = uniqueDaysAsc.length - 1; i > 0; i--) {
+    const current = new Date(uniqueDaysAsc[i]).getTime();
+    const previous = new Date(uniqueDaysAsc[i - 1]).getTime();
+    const diffDays = Math.round((current - previous) / 86_400_000);
+    if (diffDays === 1) {
+      streak += 1;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
 /**
  * Updates the streak cache for a wallet based on whether they traded today.
  * Called each time a new position event is stored for that wallet.
  */
-export async function updateStreak(wallet: string): Promise<void> {
-  const today = new Date().toISOString().split("T")[0];
-  const cached = await db.query.streakCache.findFirst({
-    where: eq(schema.streakCache.wallet, wallet),
+export async function updateStreak(wallet: string, competitionId: number): Promise<void> {
+  const events = await db.query.positionEvents.findMany({
+    where: (t, { and }) =>
+      and(eq(t.wallet, wallet), eq(t.competitionId, competitionId)),
   });
 
-  const newStreak = computeStreak(
-    cached?.streakDays ?? 0,
-    cached?.lastActiveDay ?? null,
-    today
-  );
+  const newStreak = computeConsecutiveStreakDays(events.map((e) => e.closeTime));
+  const latestClose = events.length ? Math.max(...events.map((e) => e.closeTime)) : null;
+  const latestDay = latestClose ? dayFromUnix(latestClose) : null;
 
   await db
     .insert(schema.streakCache)
-    .values({ wallet, streakDays: newStreak, lastActiveDay: today })
+    .values({ wallet, streakDays: newStreak, lastActiveDay: latestDay })
     .onConflictDoUpdate({
       target: [schema.streakCache.wallet],
-      set: { streakDays: newStreak, lastActiveDay: today, updatedAt: new Date() },
+      set: { streakDays: newStreak, lastActiveDay: latestDay, updatedAt: new Date() },
     });
 }
 
@@ -89,8 +111,8 @@ export async function recomputeWalletRas(
     notionalUsd: e.notionalUsd,
   }));
 
-  // Refresh streak before scoring
-  await updateStreak(wallet);
+  // Refresh streak only from observed trading days for this competition
+  await updateStreak(wallet, competitionId);
 
   const streak = await db.query.streakCache.findFirst({
     where: eq(schema.streakCache.wallet, wallet),

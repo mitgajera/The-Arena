@@ -13,7 +13,7 @@ The Arena adds two parallel competition tracks on top of Adrena's existing P&L l
 | **Squad Wars** | 5-player teams compete on aggregate RAS score, tiered by collateral | Social / team traders |
 | **Gladiator Mode** | Single-elimination bracket, 64 players, 1v1 RAS duels | Competitive solos |
 
-Both tracks use **RAS (Risk-Adjusted Score)** - a composite metric that rewards consistent, disciplined trading over lucky single trades or bot-spamming.
+Both tracks use **RAS (Risk-Adjusted Score)**, a composite metric that rewards consistent and disciplined trading over lucky single trades or bot-spamming.
 
 ---
 
@@ -61,7 +61,7 @@ RAS = (PnL% × log(1+N)/log(10) × StreakBonus) / DrawdownPenalty
      └──────────────────────┘
 ```
 
-The system reads Adrena's position accounts - it does **not** rewrite trading logic.
+The system reads Adrena position accounts; it does **not** rewrite trading logic.
 
 ---
 
@@ -119,7 +119,7 @@ cd ../frontend && npm install
 
 ```bash
 cp .env.example .env
-# Fill in DATABASE_URL, RPC_URL, WS_URL, ADRENA_PROGRAM_ID
+# Fill in DATABASE_URL, RPC_URL, WS_URL, ADRENA_PROGRAM_ID, ADRENA_REST_URL, ARENA_PROGRAM_ID
 ```
 
 ### 3. Database
@@ -134,7 +134,7 @@ cd indexer && npx drizzle-kit push
 anchor build
 anchor deploy --provider.cluster devnet
 
-# Update ARENA_PROGRAM_ID in .env and lib.rs INDEXER_PUBKEY / ADMIN_PUBKEY
+# Update ARENA_PROGRAM_ID in .env, plus INDEXER_PUBKEY and ADMIN_PUBKEY in lib.rs
 ts-node scripts/deploy.ts --cluster devnet
 ```
 
@@ -161,10 +161,10 @@ cd frontend && npm run dev
 
 ```bash
 # Unit tests (RAS + bracket)
-cd indexer && npm test
+npm run test:unit
 
 # Anchor program tests
-anchor test
+npm test
 ```
 
 ### 8. Run test competition
