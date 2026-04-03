@@ -1,23 +1,12 @@
 import { FastifyInstance } from "fastify";
-import { db, schema } from "../../src/db";
 import { desc } from "drizzle-orm";
-
-// Shared DB client — re-exported from indexer schema for API use
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import * as s from "../../../indexer/src/schema";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL ?? "postgresql://postgres:password@localhost:5432/arena",
-});
-export const apiDb = drizzle(pool, { schema: s });
+import { db, schema } from "../db";
 
 export async function healthRoutes(app: FastifyInstance) {
   app.get("/health", async (_req, reply) => {
     try {
-      // Measure indexer lag by checking the latest computed_at timestamp
-      const latest = await apiDb.query.rasScores.findFirst({
-        orderBy: [desc(s.rasScores.computedAt)],
+      const latest = await db.query.rasScores.findFirst({
+        orderBy: [desc(schema.rasScores.computedAt)],
       });
 
       const lagSeconds = latest?.computedAt

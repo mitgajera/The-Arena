@@ -34,6 +34,17 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.ts"]
+    "testMatch": ["<rootDir>/../tests/ras.test.ts", "<rootDir>/../tests/bracket.test.ts"],
+    "moduleNameMapper": {
+      "^../indexer/src/(.*)$": "<rootDir>/src/$1"
+    },
+    "globals": {
+      "ts-jest": {
+        "tsconfig": {
+          "rootDir": "..",
+          "paths": {}
+        }
+      }
+    }
   }
 }
