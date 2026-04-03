@@ -1,0 +1,40 @@
+[network]
+rpc_url = "https://api.mainnet-beta.solana.com"
+ws_url  = "wss://api.mainnet-beta.solana.com"
+
+[programs]
+arena_program_id  = "ARENA_PROGRAM_ID_AFTER_DEPLOY"
+adrena_program_id = "ADRENA_PROGRAM_ID_HERE"   # get from Adrena team
+
+[keys]
+indexer_keypair_path = "./keys/indexer.json"   # trusted signer for RAS writes
+admin_keypair_path   = "./keys/admin.json"     # for competition creation
+
+[competition]
+squad_creation_cost_adx   = 1_000_000    # 1 ADX (6 decimals)
+min_prior_trades          = 1
+competition_duration_days = 7
+gladiator_bracket_size    = 64           # 32 | 64 | 128
+gladiator_entry_stake_adx = 10_000_000  # 10 ADX
+
+[scoring]
+min_trades_for_leaderboard   = 5
+min_holding_hours            = 4
+min_notional_usd             = 50
+streak_bonus_per_day         = 0.05
+streak_bonus_max             = 0.50
+wash_trade_threshold_seconds = 60
+ras_update_interval_seconds  = 300      # 5 minutes
+
+[prizes]
+treasury_share_pct           = 20
+entry_fee_to_prize_pct       = 80
+gladiator_champion_share_pct = 35
+gladiator_finalist_share_pct = 10       # each of top 4
+
+[db]
+database_url = "postgresql://localhost:5432/arena"
+
+[api]
+port = 3001
+cors_origins = ["http://localhost:3000", "https://app.adrena.xyz"]
