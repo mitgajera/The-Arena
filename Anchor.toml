@@ -6,10 +6,10 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-arena = "ArenaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+arena = "5sAYiQrPuqivVjsFJX56LzZqTp5jG8p4ebP54jG3pFdV"
 
 [programs.devnet]
-arena = "ArenaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+arena = "5sAYiQrPuqivVjsFJX56LzZqTp5jG8p4ebP54jG3pFdV"
 
 [registry]
 url = "https://api.apr.dev"

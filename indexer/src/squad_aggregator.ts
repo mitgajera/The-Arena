@@ -1,11 +1,10 @@
 import { eq } from "drizzle-orm";
 import BN from "bn.js";
-import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, Keypair } from "@solana/web3.js";
+import { Program } from "@coral-xyz/anchor";
+import { Keypair } from "@solana/web3.js";
 import { db, schema } from "./db";
-import { computeRAS, TradeRecord } from "./ras";
+import { computeRAS, computeStreak, TradeRecord } from "./ras";
 
-// Tier thresholds (avg member collateral in USD)
 const TIER_THRESHOLDS = {
   diamond: 25_000,
   gold:     5_000,
@@ -24,15 +23,10 @@ async function getLatestRas(
   competitionId: number
 ): Promise<{ ras: number; avgCollateral: number }> {
   const score = await db.query.rasScores.findFirst({
-    where:
-      (t, { and }) =>
-        and(
-          eq(t.wallet, wallet),
-          eq(t.competitionId, competitionId)
-        ),
+    where: (t, { and }) =>
+      and(eq(t.wallet, wallet), eq(t.competitionId, competitionId)),
   });
 
-  // Also fetch average collateral from position events to determine tier
   const events = await db.query.positionEvents.findMany({
     where: (t, { and }) =>
       and(eq(t.wallet, wallet), eq(t.competitionId, competitionId)),
@@ -44,6 +38,31 @@ async function getLatestRas(
       : 0;
 
   return { ras: score?.ras ?? 0, avgCollateral };
+}
+
+/**
+ * Updates the streak cache for a wallet based on whether they traded today.
+ * Called each time a new position event is stored for that wallet.
+ */
+export async function updateStreak(wallet: string): Promise<void> {
+  const today = new Date().toISOString().split("T")[0];
+  const cached = await db.query.streakCache.findFirst({
+    where: eq(schema.streakCache.wallet, wallet),
+  });
+
+  const newStreak = computeStreak(
+    cached?.streakDays ?? 0,
+    cached?.lastActiveDay ?? null,
+    today
+  );
+
+  await db
+    .insert(schema.streakCache)
+    .values({ wallet, streakDays: newStreak, lastActiveDay: today })
+    .onConflictDoUpdate({
+      target: [schema.streakCache.wallet],
+      set: { streakDays: newStreak, lastActiveDay: today, updatedAt: new Date() },
+    });
 }
 
 /**
@@ -70,16 +89,14 @@ export async function recomputeWalletRas(
     notionalUsd: e.notionalUsd,
   }));
 
+  // Refresh streak before scoring
+  await updateStreak(wallet);
+
   const streak = await db.query.streakCache.findFirst({
     where: eq(schema.streakCache.wallet, wallet),
   });
 
-  const result = computeRAS(
-    trades,
-    periodStart,
-    periodEnd,
-    streak?.streakDays ?? 0
-  );
+  const result = computeRAS(trades, periodStart, periodEnd, streak?.streakDays ?? 0);
 
   await db
     .insert(schema.rasScores)
@@ -139,13 +156,11 @@ export async function aggregateSquads(
         : 0;
     const tier = assignTier(avgCollateral);
 
-    // Update DB
     await db
       .update(schema.squads)
       .set({ rasScore: squadRas, tier, updatedAt: new Date() })
       .where(eq(schema.squads.id, squad.id));
 
-    // Push on-chain via CPI
     try {
       const tierEnum =
         tier === "diamond" ? { diamond: {} }
@@ -154,22 +169,14 @@ export async function aggregateSquads(
         : { bronze: {} };
 
       await program.methods
-        .updateSquadRas(
-          new BN(Math.round(squadRas * 1000)),
-          tierEnum
-        )
-        .accounts({
-          squad: squad.onchainPubkey,
-          indexerSigner: indexerKeypair.publicKey,
-        })
+        .updateSquadRas(new BN(Math.round(squadRas * 1000)), tierEnum)
+        .accounts({ squad: squad.onchainPubkey, indexerSigner: indexerKeypair.publicKey })
         .signers([indexerKeypair])
         .rpc();
 
-      console.log(
-        `[Aggregator] Updated squad ${squad.name} | RAS=${squadRas.toFixed(2)} tier=${tier}`
-      );
+      console.log(`[Aggregator] ${squad.name} RAS=${squadRas.toFixed(2)} tier=${tier}`);
     } catch (err) {
-      console.error(`[Aggregator] On-chain update failed for squad ${squad.name}:`, err);
+      console.error(`[Aggregator] On-chain update failed for ${squad.name}:`, err);
     }
   }
 }

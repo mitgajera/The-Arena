@@ -1,0 +1,21 @@
+{
+  "name": "the-arena",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "anchor test",
+    "seed": "ts-node -P scripts/tsconfig.json scripts/seed_devnet.ts",
+    "deploy": "ts-node -P scripts/tsconfig.json scripts/deploy.ts",
+    "test:competition": "ts-node -P scripts/tsconfig.json scripts/run_test_competition.ts"
+  },
+  "devDependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/web3.js": "^1.95.4",
+    "@types/mocha": "^10.0.7",
+    "@types/node": "^22.0.0",
+    "chai": "^4.5.0",
+    "mocha": "^10.7.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}

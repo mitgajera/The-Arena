@@ -1,19 +1,16 @@
-import React from "react";
 import Head from "next/head";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { ArenaTab } from "../components/Arena/ArenaTab";
 
-// Replace with your wallet adapter integration (e.g. @solana/wallet-adapter-react).
-// This page is designed as a drop-in to the existing Adrena Next.js frontend.
-// Pass `competitionId` and `connectedWallet` as props or read them from context.
-
-const COMPETITION_ID = parseInt(process.env.NEXT_PUBLIC_COMPETITION_ID ?? "1", 10);
+const COMPETITION_ID = parseInt(
+  process.env.NEXT_PUBLIC_COMPETITION_ID ?? "1",
+  10
+);
 
 export default function CompetitionPage() {
-  // In the real integration: read from useWallet() hook provided by Adrena's wallet adapter context.
-  const connectedWallet =
-    typeof window !== "undefined"
-      ? (window as unknown as { __arenaWallet?: string }).__arenaWallet ?? null
-      : null;
+  const { publicKey } = useWallet();
+  const connectedWallet = publicKey?.toBase58() ?? null;
 
   return (
     <>
@@ -24,6 +21,11 @@ export default function CompetitionPage() {
           content="Squad Wars, Gladiator Mode, and RAS leaderboard for Adrena's trading competition."
         />
       </Head>
+
+      <div className="absolute top-4 right-4 z-10">
+        <WalletMultiButton />
+      </div>
+
       <ArenaTab competitionId={COMPETITION_ID} connectedWallet={connectedWallet} />
     </>
   );

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bs58 from "bs58";
 import { Connection, Keypair } from "@solana/web3.js";
 import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { eq } from "drizzle-orm";
@@ -11,12 +12,12 @@ import {
 } from "./bracket_engine";
 import idl from "../../target/idl/arena.json";
 
-const RPC_URL   = process.env.RPC_URL   ?? "https://api.devnet.solana.com";
-const WS_URL    = process.env.WS_URL    ?? "wss://api.devnet.solana.com";
-const ADRENA_ID = process.env.ADRENA_PROGRAM_ID ?? "";
+const RPC_URL        = process.env.RPC_URL            ?? "https://api.devnet.solana.com";
+const ADRENA_ID      = process.env.ADRENA_PROGRAM_ID  ?? "";
+const ADRENA_REST    = process.env.ADRENA_REST_URL;   // set once Adrena provides the endpoint
 
-const RAS_INTERVAL_MS     =  5 * 60 * 1000;  // 5 minutes
-const BRACKET_INTERVAL_MS = 60 * 60 * 1000;  // 1 hour
+const RAS_INTERVAL_MS     =  5 * 60 * 1000;
+const BRACKET_INTERVAL_MS = 60 * 60 * 1000;
 
 function loadKeypair(envVar: string): Keypair {
   const val = process.env[envVar];
@@ -24,7 +25,6 @@ function loadKeypair(envVar: string): Keypair {
   try {
     return Keypair.fromSecretKey(Buffer.from(JSON.parse(val)));
   } catch {
-    const bs58 = require("bs58");
     return Keypair.fromSecretKey(bs58.decode(val));
   }
 }
@@ -69,7 +69,8 @@ async function main() {
     RPC_URL,
     ADRENA_ID,
     competition.id,
-    competition.periodStart
+    competition.periodStart,
+    ADRENA_REST
   );
   await poller.backfill(uniqueWallets);
 

@@ -6,7 +6,7 @@ pub mod state;
 use instructions::*;
 use state::*;
 
-declare_id!("ArenaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+declare_id!("5sAYiQrPuqivVjsFJX56LzZqTp5jG8p4ebP54jG3pFdV");
 
 // Replace with the actual trusted indexer keypair public key after generating keys/indexer.json.
 pub const INDEXER_PUBKEY: Pubkey = pubkey!("11111111111111111111111111111111");

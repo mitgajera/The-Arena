@@ -3,7 +3,7 @@ rpc_url = "https://api.mainnet-beta.solana.com"
 ws_url  = "wss://api.mainnet-beta.solana.com"
 
 [programs]
-arena_program_id  = "ARENA_PROGRAM_ID_AFTER_DEPLOY"
+arena_program_id  = "5sAYiQrPuqivVjsFJX56LzZqTp5jG8p4ebP54jG3pFdV"
 adrena_program_id = "ADRENA_PROGRAM_ID_HERE"   # get from Adrena team
 
 [keys]

@@ -1,4 +1,4 @@
-# The Arena — Adrena Trading Competition Module
+# The Arena - Adrena Trading Competition Module
 
 A trading competition module for [Adrena](https://app.adrena.xyz), the Solana perpetual DEX. Built for the **Adrena × Autonom: Trading Competition Design & Development** bounty.
 
@@ -13,7 +13,7 @@ The Arena adds two parallel competition tracks on top of Adrena's existing P&L l
 | **Squad Wars** | 5-player teams compete on aggregate RAS score, tiered by collateral | Social / team traders |
 | **Gladiator Mode** | Single-elimination bracket, 64 players, 1v1 RAS duels | Competitive solos |
 
-Both tracks use **RAS (Risk-Adjusted Score)** — a composite metric that rewards consistent, disciplined trading over lucky single trades or bot-spamming.
+Both tracks use **RAS (Risk-Adjusted Score)** - a composite metric that rewards consistent, disciplined trading over lucky single trades or bot-spamming.
 
 ---
 
@@ -26,9 +26,9 @@ RAS = (PnL% × log(1+N)/log(10) × StreakBonus) / DrawdownPenalty
 | Component | Effect |
 |-----------|--------|
 | `PnL%` | Net realized PnL ÷ avg collateral × 100 |
-| `log(1+N)/log(10)` | Trade count multiplier — rewards volume but log-scaled to deter bots |
+| `log(1+N)/log(10)` | Trade count multiplier - rewards volume but log-scaled to deter bots |
 | `StreakBonus = 1 + min(days × 0.05, 0.50)` | Up to +50% for 10 consecutive trading days |
-| `DrawdownPenalty = 1 + MaxDrawdown%` | Penalizes peak-to-trough losses — rewards risk management |
+| `DrawdownPenalty = 1 + MaxDrawdown%` | Penalizes peak-to-trough losses - rewards risk management |
 
 **Eligibility gates:** ≥ 5 trades, ≥ 4 hours total holding time, positions ≥ $50 notional, no sub-60s wash trades.
 
@@ -61,7 +61,7 @@ RAS = (PnL% × log(1+N)/log(10) × StreakBonus) / DrawdownPenalty
      └──────────────────────┘
 ```
 
-The system reads Adrena's position accounts — it does **not** rewrite trading logic.
+The system reads Adrena's position accounts - it does **not** rewrite trading logic.
 
 ---
 
@@ -147,13 +147,13 @@ ts-node scripts/seed_devnet.ts
 ### 6. Run services
 
 ```bash
-# Terminal 1 — indexer
+# Terminal 1 - indexer
 cd indexer && npm start
 
-# Terminal 2 — API
+# Terminal 2 - API
 cd api && npm start
 
-# Terminal 3 — frontend
+# Terminal 3 - frontend
 cd frontend && npm run dev
 ```
 
@@ -239,19 +239,19 @@ Total pool (entry fees)
 Before mainnet deployment, confirm with the Adrena team:
 
 1. **Adrena Program ID** (mainnet + devnet)
-2. **Position account layout** — field offsets for `owner`, `opened_at`, `closed_at`, `realized_pnl`, `collateral`, `size`, `side`
-3. **Streak system** — is `streak_days` stored on-chain per wallet? PDA seed?
-4. **Raffle CPI** — interface for consolation ticket issuance (stubbed in `advance_bracket.rs`)
-5. **ADX token mint** — for entry fee collection
-6. **Existing indexer** — can we subscribe to their event stream instead of polling?
-7. **Frontend integration** — standalone Next.js page or drop-in component to existing repo?
+2. **Position account layout** - field offsets for `owner`, `opened_at`, `closed_at`, `realized_pnl`, `collateral`, `size`, `side`
+3. **Streak system** - is `streak_days` stored on-chain per wallet? PDA seed?
+4. **Raffle CPI** - interface for consolation ticket issuance (stubbed in `advance_bracket.rs`)
+5. **ADX token mint** - for entry fee collection
+6. **Existing indexer** - can we subscribe to their event stream instead of polling?
+7. **Frontend integration** - standalone Next.js page or drop-in component to existing repo?
 
 ---
 
 ## Out of Scope (v1)
 
-- On-chain raffle CPI (stubbed — emits event)
-- Trophy NFT minting via Metaplex (stubbed — logs message)
+- On-chain raffle CPI (stubbed - emits event)
+- Trophy NFT minting via Metaplex (stubbed - logs message)
 - Squad chat (compressed account messages)
 - Mobile app
 - Cross-competition seasonal leaderboard
